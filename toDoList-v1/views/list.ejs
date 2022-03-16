@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>To Do List</title>
+    </head>
+    <body>
+        <h1><%= date %></h1>
+        <ul>
+            <% for (let i = 0; i < taskList.length; i++) { %>
+                <li><%= taskList[i] %></li>
+            <% } %>
+        </ul>
+        <form action="/" method="post">
+            <label for="newTask">New Task:</label>
+            <input type="text" name="newTask" id="newTask" placeholder="Task">
+            <button type="submit">Add</button>
+        </form>
+    </body>
+</html>
