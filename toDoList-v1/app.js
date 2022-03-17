@@ -1,30 +1,43 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const date = require(__dirname + "/date.js");
 
 const app = express();
 
 
-let taskList = ["Buy Food", "Cook Food", "Eat Food"];
+const generalTaskList = ["Buy Food", "Cook Food", "Eat Food"];
+const workTaskList = [];
 
 app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-    let today = new Date();
-    let options = {
-        weekday: "long",
-        month: "long",
-        day: "numeric"
-    }
-    let date = today.toLocaleDateString("en-US", options);
-    res.render("list", {date: date, taskList: taskList});
+    const today = date.getDate();
+    res.render("list", {listTitle: today, taskList: generalTaskList});
+})
+
+app.get("/work", (req, res) => {
+    res.render("list", {listTitle: "Work List", taskList: workTaskList});
+})
+
+app.get("/about", (req, res) => {
+    res.render("about");
 })
 
 app.post("/", (req, res) => {
-    let newTask = req.body.newTask;
-    taskList.push(newTask);
-    res.redirect("/");
+    console.log(req.body);
+    const newTask = req.body.newTask;
+    let destination = "";
+    if (req.body.list === "Work") {
+        workTaskList.push(newTask);
+        destination = "work";
+    } 
+    else {
+        generalTaskList.push(newTask);
+    }
+    res.redirect("/" + destination);
 })
 
 app.use(bodyParser.urlencoded({extended: true}));
