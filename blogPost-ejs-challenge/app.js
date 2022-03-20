@@ -1,7 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
-const lodash = require("lodash");
+const _ = require("lodash");
+const mongoose = require("mongoose");
 
 
 let homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
@@ -10,18 +11,39 @@ const contactContent = "Scelerisque eleifend donec pretium vulputate sapien. Rho
 
 const app = express();
 
-const posts = [];
-
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
+mongoose.connect("mongodb+srv://admin-yang:Test123@cluster0.d9pbz.mongodb.net/blogPostJournalDB", () => {
+  console.log("Connected to mongodb server successfully.");
+})
+
+const postSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    require: true
+  },
+  content: {
+    type: String,
+    require: true
+  }
+})
+
+const Post = mongoose.model("Post", postSchema);
+
 app.get("/", (req, res) => {
-  res.render("home", {
-    homeStartingContent: homeStartingContent,
-    posts: posts
-  });
+
+  Post.find({}, (err, posts) => {
+
+    res.render("home", {
+      
+      homeStartingContent: homeStartingContent,
+      posts: posts
+
+    });
+  })
 })
 
 app.get("/about", (req, res) => {
@@ -38,21 +60,36 @@ app.get("/compose", (req, res) => {
 
 app.get("/posts/:postTitle", (req, res) => {
   const requestedPostTitle = req.params.postTitle;
-  posts.forEach((post) => {
-    if (lodash.lowerCase(post.title) === lodash.lowerCase(requestedPostTitle)) {
-      res.render("post", {
-        postTitle: post.title,
-        postContent: post.content});
-    }
+
+  Post.find({}, (err, posts) => {
+    posts.forEach((post) => {
+      if (_.lowerCase(post.title) === _.lowerCase(requestedPostTitle)) {
+        res.render("post", {
+          postID: post._id,
+          postTitle: post.title,
+          postContent: post.content});
+      }
+    })
   })
 })
 
 app.post("/compose", function(req, res) {
-  const post = {
+  const post = new Post({
     title: req.body.newPostTitle,
     content: req.body.newPostContent
-  };
-  posts.push(post);
+});
+  post.save();
+  res.redirect("/");
+})
+
+app.post("/delete", function(req, res) {
+  Post.findByIdAndRemove(req.body.postID, (err) => {
+    if(!err) {
+      console.log("Deleted successfully!");
+    } else {
+      console.log(err);
+    }
+  });
   res.redirect("/");
 })
 
